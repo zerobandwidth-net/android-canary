@@ -1,0 +1,17 @@
+<resources>
+
+    <string name="app_name">Canary</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="label_btnToggleMobileData">Toggle Mobile Data</string>
+
+    <string name="label_btnToggleWiFi">Toggle WiFi</string>
+    <string name="label_btnWifiEnabled">WiFi Enabled</string>
+    <string name="label_btnWifiEnabling">Enabling WiFi&#8230;</string>
+    <string name="label_btnWifiDisabled">WiFi Disabled</string>
+    <string name="label_btnWifiDisabling">Disabling WiFi&#8230;</string>
+    <string name="label_btnWifiUnknown">(WiFi state unknown)</string>
+    <string name="label_btnWifiDisconnected">WiFi Disconnected</string>
+    <string name="label_btnWifiConnected">WiFi Connected<br/>%s</string>
+
+</resources>
