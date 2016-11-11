@@ -1,6 +1,6 @@
 package net.zerobandwidth.android.apps.canary;
 
-import android.content.Context;
+import android.app.Service;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -10,24 +10,29 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
-import net.zerobandwidth.android.lib.canary.Canary;
+import net.zerobandwidth.android.lib.canary.CanaryService;
 import net.zerobandwidth.android.lib.canary.WifiListener;
+import net.zerobandwidth.android.lib.services.SimpleServiceConnection;
 
 /**
  * Main activity for Canary.
- * @since 0.1
+ * @since zerobandwidth-net/canary 0.0.1 (#1)
  */
 public class CanaryMainActivity
 extends AppCompatActivity
-implements WifiListener
+implements WifiListener, SimpleServiceConnection.Listener
 {
+/// Statics ////////////////////////////////////////////////////////////////////
+
     /** Tag for log entries. */
     public static final String TAG = CanaryMainActivity.class.getSimpleName() ;
+
+/// Inner Classes //////////////////////////////////////////////////////////////
 
     /**
      * Updates the wifi button on the UI. Execute this runnable within the UI
      * thread.
-     * @since 0.1
+     * @since zerobandwidth-net/canary 0.0.1 (#1)
      */
     protected class UpdateWifiButtonTask
     implements Runnable
@@ -47,6 +52,7 @@ implements WifiListener
          * Updates the button's appearance. This task should be executed on the
          * UI thread so that the change takes effect immediately.
          */
+        @Override
         public void run()
         {
             m_btnToggleWifi.setCompoundDrawablesWithIntrinsicBounds(
@@ -55,15 +61,18 @@ implements WifiListener
         }
     }
 
-    /** Receiver for the various Android OS broadcasts. */
-    protected Canary m_rcv = null ;
+/// Instance Fields ////////////////////////////////////////////////////////////
+
+    /** A persistent connection to the Canary Service. */
+    protected SimpleServiceConnection<CanaryService> m_conn = null ;
+    /** A persistent reference to a running Canary Service. */
+    protected CanaryService m_srv = null ;
     /** The button that indicates and toggles wifi state. */
     protected Button m_btnToggleWifi = null ;
     /** The button that indicates and toggles mobile data state. */
     protected Button m_btnToggleMobileData = null ;
-    /** Persistent reference to wifi manager. */
-    protected WifiManager m_mgrWifi = null ;
 
+/// android.support.v7.app.AppCompatActivity ///////////////////////////////////
 
     @Override
     protected void onCreate( Bundle bndlState )
@@ -71,10 +80,8 @@ implements WifiListener
         super.onCreate(bndlState) ;
         this.setContentView(R.layout.activity_main) ;
         this.setSupportActionBar((Toolbar)(findViewById(R.id.toolbar))) ;
-        this.captureControlRefs()
-            .captureSystemServices()
-            .initReceiver()
-            ;
+        this.captureControlRefs() ;
+        CanaryService.kickoff(this) ;
 /* cargo cult code created by AS
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -96,6 +103,13 @@ implements WifiListener
     }
 
     @Override
+    protected void onResume()
+    {
+        super.onResume() ;
+        this.connectToService() ;
+    }
+
+    @Override
     public boolean onOptionsItemSelected( MenuItem item )
     {
         final int id = item.getItemId() ;
@@ -109,10 +123,25 @@ implements WifiListener
         return super.onOptionsItemSelected(item) ;
     }
 
+    @Override
+    protected void onDestroy()
+    {
+        if( m_conn != null )
+        {
+            m_conn.disconnect(this).removeListener(this) ;
+            m_conn = null ;
+        }
+        m_srv = null ;
+        super.onDestroy() ;
+    }
+
+/// Other Initializers /////////////////////////////////////////////////////////
+
     /**
      * Captures references to all the UI controls that we care about in the
      * class's logic.
-     * @return the activity, for fluid invocations
+     * @return (fluid)
+     * @see #onCreate
      */
     protected CanaryMainActivity captureControlRefs()
     {
@@ -124,31 +153,18 @@ implements WifiListener
     }
 
     /**
-     * Captures references to the system services that will provide network
-     * information.
-     * @return the activity, for fluid invocations
+     * Initializes the connection to the Canary Service.
+     * @return (fluid)
      */
-    protected CanaryMainActivity captureSystemServices()
+    protected CanaryMainActivity connectToService()
     {
-        m_mgrWifi = ((WifiManager)
-                (this.getSystemService(Context.WIFI_SERVICE))) ;
-
+        if( m_conn == null )
+            m_conn = new SimpleServiceConnection<>( CanaryService.class ) ;
+        m_conn.addListener(this).connect(this) ;
         return this ;
     }
 
-    /**
-     * Initializes an instance of the broadcast receiver.
-     * @return the activity, for fluid invocations
-     */
-    protected CanaryMainActivity initReceiver()
-    {
-        m_rcv = Canary.getBoundInstance(this)
-                .enable( Canary.WIFI )
-                .addWifiListener(this)
-                .register()
-                ;
-        return this ;
-    }
+/// net.zerobandwidth.android.lib.canary.WifiListener //////////////////////////
 
     @Override
     public void onWifiStateChanged( int nCurrent, int nPrevious )
@@ -195,10 +211,24 @@ implements WifiListener
         this.runOnUiThread( task ) ;
     }
 
+/// net.zerobandwidth.android.lib.services.SimpleServiceConnection.Listener ////
+
+
     @Override
-    protected void onDestroy()
+    public <LS extends Service> void onServiceConnected( SimpleServiceConnection<LS> conn )
     {
-        m_rcv.stop() ;
-        super.onDestroy() ;
+        if( conn.isServiceClass(CanaryService.class) )
+            m_srv = ((CanaryService)(conn.getServiceInstance())) ;
+        Log.i( TAG, "Activity connected to service." ) ;
     }
+
+    @Override
+    public <LS extends Service> void onServiceDisconnected( SimpleServiceConnection<LS> conn )
+    {
+        Log.i( TAG, "Activity disconnected from service." ) ;
+        m_srv = null ;
+    }
+
+/// Accessors / Mutators ///////////////////////////////////////////////////////
+
 }

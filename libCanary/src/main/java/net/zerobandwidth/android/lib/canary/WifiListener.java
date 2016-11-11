@@ -1,11 +1,9 @@
 package net.zerobandwidth.android.lib.canary;
 
-import android.os.Bundle;
-
 /**
  * Classes that want the Canary to feed it signals about wifi state must
  * implement this interface.
- * @since 0.1
+ * @since zerobandwidth-net/canary 0.0.1 (#1)
  */
 public interface WifiListener
 {

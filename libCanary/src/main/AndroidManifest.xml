@@ -8,6 +8,11 @@
         android:supportsRtl="true"
         >
 
+        <service
+            android:name=".CanaryService"
+            android:enabled="true"
+            />
+
     </application>
 
 </manifest>

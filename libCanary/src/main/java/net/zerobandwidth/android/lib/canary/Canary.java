@@ -14,12 +14,14 @@ import java.util.ArrayList;
 /**
  * Listens for signals from the Android OS that network connectivity has
  * changed.
- * @since 0.1
+ * @since zerobandwidth-net/canary 0.0.1 (#1)
  */
 @SuppressWarnings("unused")
 public class Canary
 extends BroadcastReceiver
 {
+/// Statics ////////////////////////////////////////////////////////////////////
+
     /** Log entry tag. */
     public static final String TAG = Canary.class.getSimpleName() ;
 
@@ -36,6 +38,8 @@ extends BroadcastReceiver
     public static Canary getBoundInstance( Context ctx )
     { return new Canary(ctx) ; }
 
+/// Instance Fields ////////////////////////////////////////////////////////////
+
     /** The context in which the receiver operates and gathers resources. */
     protected Context m_ctx = null ;
 
@@ -45,6 +49,8 @@ extends BroadcastReceiver
     /** Specifies whether to notify on wifi signals. */
     protected long m_bmFeaturesEnabled = 0L ;
 
+/// Life Cycle /////////////////////////////////////////////////////////////////
+
     /**
      * Binds a Canary instance to the given context, and registers it to catch
      * relevant signals.
@@ -53,23 +59,6 @@ extends BroadcastReceiver
     public Canary( Context ctx )
     {
         this.setContext(ctx).initListenerRegistry() ;
-    }
-
-    /**
-     * Binds the instance to a context.
-     * @param ctx the context in which to operate
-     * @return the instance, for fluid invocation
-     */
-    public Canary setContext( Context ctx )
-    {
-        if( m_ctx != null )
-            this.unregister() ;
-        m_ctx = ctx ;
-        if( m_ctx == null )
-        {
-            Log.w( TAG, "Null context was set. Cannot register a receiver." ) ;
-        }
-        return this ;
     }
 
     /**
@@ -97,6 +86,7 @@ extends BroadcastReceiver
                 f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION) ;
             }
             m_ctx.registerReceiver( this, f ) ;
+            Log.i( TAG, "Registered as a receiver." ) ;
         }
         else
             Log.e( TAG, "Cannot register the receiver without a context." ) ;
@@ -117,8 +107,39 @@ extends BroadcastReceiver
             { Log.d( TAG, "Tried to unregister, but wasn't registered yet." ) ; }
         }
         else
-            Log.i( TAG, "Null context; nothing to do to unregister." ) ;
+            Log.w( TAG, "Null context; nothing to do to unregister." ) ;
 
+        return this ;
+    }
+
+    /**
+     * The context in which this receiver is created should call this method in
+     * its {@code onDestroy()} method.
+     * @return the instance, for fluid invocation
+     */
+    public Canary stop()
+    {
+        this.unregister() ;
+        m_aWifiListeners.clear() ;
+        return this ;
+    }
+
+/// Accessors / Mutators ///////////////////////////////////////////////////////
+
+    /**
+     * Binds the instance to a context.
+     * @param ctx the context in which to operate
+     * @return the instance, for fluid invocation
+     */
+    public Canary setContext( Context ctx )
+    {
+        if( m_ctx != null )
+            this.unregister() ;
+        m_ctx = ctx ;
+        if( m_ctx == null )
+        {
+            Log.w( TAG, "Null context was set. Cannot register a receiver." ) ;
+        }
         return this ;
     }
 
@@ -188,6 +209,8 @@ extends BroadcastReceiver
         return this ;
     }
 
+/// android.os.BroadcastReceiver ///////////////////////////////////////////////
+
     @Override
     public void onReceive( Context ctx, Intent sig )
     {
@@ -230,6 +253,8 @@ extends BroadcastReceiver
         }
     }
 
+/// Other Instance Methods /////////////////////////////////////////////////////
+
     /**
      * Notifies all listeners that the wifi state has changed.
      * @param bndlInfo a bundle of network information that was caught in a
@@ -244,15 +269,4 @@ extends BroadcastReceiver
             l.onWifiStateChanged( nCurrent, nPrevious ) ;
     }
 
-    /**
-     * The context in which this receiver is created should call this method in
-     * its {@code onDestroy()} method.
-     * @return the instance, for fluid invocation
-     */
-    public Canary stop()
-    {
-        this.unregister() ;
-        m_aWifiListeners.clear() ;
-        return this ;
-    }
 }
