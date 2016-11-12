@@ -8,10 +8,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 
+import net.zerobandwidth.android.lib.canary.Canary;
 import net.zerobandwidth.android.lib.canary.CanaryService;
-import net.zerobandwidth.android.lib.canary.WifiListener;
 import net.zerobandwidth.android.lib.services.SimpleServiceConnection;
 
 /**
@@ -20,7 +21,7 @@ import net.zerobandwidth.android.lib.services.SimpleServiceConnection;
  */
 public class CanaryMainActivity
 extends AppCompatActivity
-implements WifiListener, SimpleServiceConnection.Listener
+implements Canary.WifiStateListener, SimpleServiceConnection.Listener
 {
 /// Statics ////////////////////////////////////////////////////////////////////
 
@@ -164,7 +165,7 @@ implements WifiListener, SimpleServiceConnection.Listener
         return this ;
     }
 
-/// net.zerobandwidth.android.lib.canary.WifiListener //////////////////////////
+/// net.zerobandwidth.android.lib.canary.WifiStateListener //////////////////////////
 
     @Override
     public void onWifiStateChanged( int nCurrent, int nPrevious )
@@ -231,4 +232,26 @@ implements WifiListener, SimpleServiceConnection.Listener
 
 /// Accessors / Mutators ///////////////////////////////////////////////////////
 
+
+/// Button Handlers ////////////////////////////////////////////////////////////
+
+    /**
+     * Handles the button-press event for the "toggle wifi" button.
+     * @param w the "toggle wifi" button
+     */
+    public void toggleWifi( View w )
+    {
+        if( m_srv != null )
+            m_srv.getCanary().toggle( Canary.WIFI ) ;
+    }
+
+    /**
+     * Handles the button-press event for the "toggle mobile data" button.
+     * @param w the "toggle mobile data" button
+     */
+    public void toggleMobileData( View w )
+    {
+        if( m_srv != null )
+            m_srv.getCanary().toggle( Canary.MOBILE ) ;
+    }
 }
